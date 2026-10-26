@@ -1,3 +1,5 @@
+
+panget
 // ===================================
 // CHORES ROULETTE
 // ===================================
@@ -510,10 +512,4 @@ function loadSettings() {
 // ===================================
 
 loadSettings();
-renderAll();
-panget
-panget deleted a message
-Compose
-Write to Prince Dhaniel Evangelista
-
-
+renderAll()
