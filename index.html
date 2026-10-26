@@ -1,111 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Chores Roulette</title>
-
-    <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chores Roulette</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+  <header class="topbar">
+    <div class="brand">🎡 Chores Roulette</div>
+    <button id="settingsBtn" class="settings-btn">⚙️ Settings</button>
+  </header>
 
-    <header>
-        <h1>🎯 Chores Roulette</h1>
-        <button id="settingsBtn" type="button">⚙️ Settings</button>
-    </header>
+  <main class="container">
+    <section class="roulette-section">
+      <h1>Who's Doing the Chores?</h1>
+      <p class="subtitle">Spin the wheel and let fate decide!</p>
 
-    <main>
+      <div class="wheel-wrapper">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="500" height="500"></canvas>
+      </div>
 
-        <section class="roulette-section">
+      <button id="spinBtn" class="spin-btn">🎯 SPIN!</button>
 
-            <div class="wheel-container">
-                <div class="pointer"></div>
+      <div id="result" class="result" aria-live="polite">
+        Your chore will appear here!
+      </div>
+    </section>
 
-                <canvas
-                    id="wheel"
-                    width="500"
-                    height="500"
-                    aria-label="Chores roulette wheel">
-                </canvas>
-            </div>
+    <aside class="chore-panel">
+      <h2>📋 Chore List</h2>
 
-            <button id="spinBtn" type="button">🎡 SPIN!</button>
+      <form id="choreForm">
+        <input
+          id="choreInput"
+          type="text"
+          placeholder="Enter a new chore..."
+          maxlength="60"
+          autocomplete="off"
+          required
+        >
+        <button type="submit" class="add-btn">➕ Add</button>
+      </form>
 
-            <div id="result" aria-live="polite">
-                Your chore will appear here!
-            </div>
+      <div class="list-actions">
+        <button id="resetBtn" class="reset-btn">🔄 Reset</button>
+        <button id="clearBtn" class="clear-btn">🗑️ Clear All</button>
+      </div>
 
-        </section>
+      <ul id="choreList"></ul>
+      <p id="choreCount" class="chore-count">0 chores</p>
+    </aside>
+  </main>
 
-        <section class="chores-section">
+  <!-- SETTINGS POPUP -->
+  <div id="settingsModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close-btn" id="closeSettings" aria-label="Close">✕</button>
 
-            <h2>📝 Chore List</h2>
+      <div id="settingsPage">
+        <h2>⚙️ Settings</h2>
 
-            <form id="choreForm">
+        <label class="setting-row">
+          <span>🌙 Dark Mode</span>
+          <input type="checkbox" id="darkModeToggle">
+        </label>
 
-                <input
-                    type="text"
-                    id="choreInput"
-                    placeholder="Enter a chore..."
-                    autocomplete="off"
-                    maxlength="60"
-                    required
-                >
+        <label class="setting-row">
+          <span>🔊 Sound Effects</span>
+          <input type="checkbox" id="soundToggle" checked>
+        </label>
 
-                <button id="addChoreBtn" type="submit">
-                    Add Chore
-                </button>
+        <button id="aboutBtn" class="about-btn">ℹ️ About</button>
+      </div>
 
-            </form>
+      <div id="aboutPage" hidden>
+        <h2>ℹ️ About</h2>
+        <p>
+          Chores Roulette makes household chores fun!
+          Add your chores, spin the wheel, and discover
+          which chore fate has chosen for you.
+        </p>
+        <p class="about-footer">Made with 💜</p>
+        <button id="backToSettings" class="about-btn">← Back to Settings</button>
+      </div>
+    </div>
+  </div>
 
-            <ul id="choreList"></ul>
-
-            <div class="list-buttons">
-                <button id="resetBtn" type="button">🔄 Reset</button>
-                <button id="clearBtn" type="button">🗑️ Clear All</button>
-            </div>
-
-        </section>
-
-        <section id="settingsPanel" class="panel hidden">
-
-            <h2>⚙️ Settings</h2>
-
-            <div class="setting-row">
-                <label for="darkModeToggle">🌙 Dark Mode</label>
-                <input type="checkbox" id="darkModeToggle">
-            </div>
-
-            <div class="setting-row">
-                <label for="soundToggle">🔊 Sound Effects</label>
-                <input type="checkbox" id="soundToggle" checked>
-            </div>
-
-            <button id="closeSettingsBtn" type="button">
-                Close Settings
-            </button>
-
-        </section>
-
-        <section id="aboutPanel" class="panel">
-            <h2>ℹ️ About</h2>
-
-            <p>
-                Chores Roulette makes household chores fun!
-                Add your chores, spin the wheel, and let fate
-                choose what you will do next.
-            </p>
-        </section>
-
-    </main>
-
-    <footer>
-        <p>Made with 💜 for a more fun way to do chores!</p>
-    </footer>
-
-    <script src="./script.js"></script>
-
+  <script src="script.js"></script>
 </body>
 </html>
+Compose
+Write to Prince Dhaniel Evangelista
+
+
