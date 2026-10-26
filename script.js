@@ -1,733 +1,519 @@
-(() => {
-    "use strict";
+// ===================================
+// CHORES ROULETTE
+// ===================================
 
-    // =========================
-    // CHORES ROULETTE
-    // =========================
+const DEFAULT_CHORES = [
+  "Sweep the floor",
+  "Wash the dishes",
+  "Take out the trash",
+  "Make the bed",
+  "Fold the clothes"
+];
 
-    const DEFAULT_CHORES = [
-        "Wash Dishes",
-        "Sweep Floor",
-        "Take Out Trash",
-        "Clean Bedroom",
-        "Fold Laundry"
-    ];
+const COLORS = [
+  "#8b5cf6",
+  "#20b978",
+  "#ffcf4a",
+  "#ff626c",
+  "#3995ff",
+  "#ff8b42",
+  "#ed68c5",
+  "#22c5c5"
+];
 
-    const COLORS = [
-        "#8b5cf6",
-        "#22c55e",
-        "#facc15",
-        "#ef4444",
-        "#3b82f6",
-        "#ec4899",
-        "#14b8a6",
-        "#f97316",
-        "#a855f7",
-        "#84cc16"
-    ];
+const STORAGE_KEY = "simpleChoresRoulette";
 
-    const wheel = document.getElementById("wheel");
-    const ctx = wheel ? wheel.getContext("2d") : null;
+let chores = loadChores();
+let wheelRotation = 0;
+let spinning = false;
+let audioContext = null;
 
-    const spinBtn = document.getElementById("spinBtn");
-    const choreForm = document.getElementById("choreForm");
-    const choreInput = document.getElementById("choreInput");
-    const choreList = document.getElementById("choreList");
-    const result = document.getElementById("result");
+const wheel = document.getElementById("wheel");
+const ctx = wheel.getContext("2d");
 
-    const resetBtn = document.getElementById("resetBtn");
-    const clearBtn = document.getElementById("clearBtn");
+const spinBtn = document.getElementById("spinBtn");
+const result = document.getElementById("result");
+const choreList = document.getElementById("choreList");
+const choreCount = document.getElementById("choreCount");
+const choreForm = document.getElementById("choreForm");
+const choreInput = document.getElementById("choreInput");
 
-    const settingsBtn = document.getElementById("settingsBtn");
-    const settingsPanel = document.getElementById("settingsPanel");
-    const closeSettingsBtn =
-        document.getElementById("closeSettingsBtn");
+const resetBtn = document.getElementById("resetBtn");
+const clearBtn = document.getElementById("clearBtn");
 
-    const darkModeToggle =
-        document.getElementById("darkModeToggle");
-    const soundToggle =
-        document.getElementById("soundToggle");
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsModal = document.getElementById("settingsModal");
+const closeSettings = document.getElementById("closeSettings");
 
-    if (
-        !wheel ||
-        !ctx ||
-        !spinBtn ||
-        !choreForm ||
-        !choreInput ||
-        !choreList ||
-        !result
-    ) {
-        console.error(
-            "Chores Roulette: May nawawalang HTML element. " +
-            "Check ang index.html."
+const darkModeToggle = document.getElementById("darkModeToggle");
+const soundToggle = document.getElementById("soundToggle");
+
+const settingsPage = document.getElementById("settingsPage");
+const aboutPage = document.getElementById("aboutPage");
+const aboutBtn = document.getElementById("aboutBtn");
+const backToSettings = document.getElementById("backToSettings");
+
+// ===================================
+// SAVE AND LOAD
+// ===================================
+
+function loadChores() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (saved !== null) {
+      const parsed = JSON.parse(saved);
+
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          item => typeof item === "string" && item.trim()
         );
-        return;
+      }
+    }
+  } catch (error) {
+    console.warn("Could not load saved chores.", error);
+  }
+
+  return [...DEFAULT_CHORES];
+}
+
+function saveChores() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(chores));
+  } catch (error) {
+    console.warn("Could not save chores.", error);
+  }
+}
+
+// ===================================
+// DRAW THE WHEEL
+// ===================================
+
+function drawWheel() {
+  const size = wheel.width;
+  const center = size / 2;
+  const radius = center - 8;
+
+  ctx.clearRect(0, 0, size, size);
+
+  if (chores.length === 0) {
+    ctx.beginPath();
+    ctx.arc(center, center, radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#e8e0fa";
+    ctx.fill();
+
+    ctx.fillStyle = "#5b3cc4";
+    ctx.font = "bold 24px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Add some chores!", center, center);
+
+    drawWheelCenter(center);
+    return;
+  }
+
+  const slice = (Math.PI * 2) / chores.length;
+
+  ctx.save();
+  ctx.translate(center, center);
+  ctx.rotate(wheelRotation);
+
+  chores.forEach((chore, index) => {
+    const start = index * slice;
+    const end = start + slice;
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, radius, start, end);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[index % COLORS.length];
+    ctx.fill();
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.rotate(start + slice / 2);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.font = bold ${Math.max(11, Math.min(17, 200 / chores.length))}px Arial;
+
+    let label = chore;
+    const maxLength = chores.length > 8 ? 13 : 19;
+
+    if (label.length > maxLength) {
+      label = label.slice(0, maxLength - 3) + "...";
     }
 
-    // =========================
-    // STORAGE
-    // =========================
+    ctx.shadowColor = "rgba(0,0,0,0.25)";
+    ctx.shadowBlur = 2;
 
-    function loadStorage(key, fallback) {
-        try {
-            const value = localStorage.getItem(key);
+    ctx.fillText(label, radius - 22, 0);
+    ctx.restore();
+  });
 
-            return value === null
-                ? fallback
-                : JSON.parse(value);
-        } catch (error) {
-            console.warn("Storage unavailable:", error);
-            return fallback;
-        }
-    }
+  ctx.restore();
+  drawWheelCenter(center);
+}
 
-    function saveStorage(key, value) {
-        try {
-            localStorage.setItem(key, JSON.stringify(value));
-        } catch (error) {
-            console.warn("Could not save settings:", error);
-        }
-    }
+function drawWheelCenter(center) {
+  ctx.beginPath();
+  ctx.arc(center, center, 25, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
 
-    const savedChores = loadStorage(
-        "choresRouletteChores",
-        DEFAULT_CHORES
-    );
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = "#5b3cc4";
+  ctx.stroke();
+}
 
-    let chores = Array.isArray(savedChores)
-        ? savedChores.filter(
-            chore =>
-                typeof chore === "string" &&
-                chore.trim() !== ""
-        )
-        : [...DEFAULT_CHORES];
+// ===================================
+// DISPLAY CHORE LIST
+// ===================================
 
-    let isSpinning = false;
-    let currentRotation = 0;
-    let spinTimeout = null;
-    let audioContext = null;
+function renderChores() {
+  choreList.innerHTML = "";
 
-    // =========================
-    // SAVE CHORES
-    // =========================
+  chores.forEach((chore, index) => {
+    const li = document.createElement("li");
 
-    function saveChores() {
-        saveStorage("choresRouletteChores", chores);
-    }
+    const name = document.createElement("span");
+    name.className = "chore-name";
+    name.textContent = chore;
 
-    // =========================
-    // DRAW ROULETTE WHEEL
-    // =========================
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "remove-btn";
+    removeBtn.textContent = "✕";
+    removeBtn.setAttribute("aria-label", "Remove " + chore);
 
-    function drawWheel() {
-        const size = wheel.width;
-        const center = size / 2;
-        const radius = center - 8;
+    removeBtn.addEventListener("click", () => {
+      if (spinning) return;
 
-        ctx.clearRect(0, 0, size, size);
+      chores.splice(index, 1);
+      saveChores();
+      renderAll();
 
-        if (chores.length === 0) {
-            ctx.beginPath();
-            ctx.arc(center, center, radius, 0, Math.PI * 2);
-            ctx.fillStyle = "#e5e7eb";
-            ctx.fill();
-
-            ctx.fillStyle = "#374151";
-            ctx.font = "bold 24px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("Add Chores!", center, center);
-
-            return;
-        }
-
-        const sliceAngle = (Math.PI * 2) / chores.length;
-
-        chores.forEach((chore, index) => {
-            const startAngle =
-                -Math.PI / 2 + index * sliceAngle;
-
-            const endAngle = startAngle + sliceAngle;
-
-            ctx.beginPath();
-            ctx.moveTo(center, center);
-            ctx.arc(
-                center,
-                center,
-                radius,
-                startAngle,
-                endAngle
-            );
-            ctx.closePath();
-
-            ctx.fillStyle = COLORS[index % COLORS.length];
-            ctx.fill();
-
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Chore label
-            ctx.save();
-
-            ctx.translate(center, center);
-            ctx.rotate(startAngle + sliceAngle / 2);
-
-            ctx.textAlign = "right";
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 15px Arial";
-
-            let label = chore;
-
-            if (label.length > 19) {
-                label = label.slice(0, 16) + "...";
-            }
-
-            ctx.shadowColor = "rgba(0,0,0,0.3)";
-            ctx.shadowBlur = 2;
-
-            ctx.fillText(
-                label,
-                radius - 18,
-                0,
-                radius * 0.65
-            );
-
-            ctx.restore();
-        });
-
-        // Center circle
-        ctx.beginPath();
-        ctx.arc(center, center, 15, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-
-        ctx.strokeStyle = "#374151";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-    }
-
-    // =========================
-    // DISPLAY CHORE LIST
-    // =========================
-
-    function renderChores() {
-        choreList.innerHTML = "";
-
-        chores.forEach((chore, index) => {
-            const item = document.createElement("li");
-
-            const name = document.createElement("span");
-            name.textContent = chore;
-
-            const removeBtn = document.createElement("button");
-            removeBtn.type = "button";
-            removeBtn.textContent = "✖";
-            removeBtn.setAttribute(
-                "aria-label",
-                "Remove " + chore
-            );
-
-            removeBtn.disabled = isSpinning;
-
-            removeBtn.addEventListener("click", () => {
-                if (isSpinning) return;
-
-                chores.splice(index, 1);
-
-                saveChores();
-                renderAll();
-
-                result.textContent = chores.length
-                    ? "Chore removed! Spin the wheel!"
-                    : "Your list is empty. Add some chores!";
-            });
-
-            item.appendChild(name);
-            item.appendChild(removeBtn);
-
-            choreList.appendChild(item);
-        });
-    }
-
-    // =========================
-    // UPDATE SCREEN
-    // =========================
-
-    function renderAll() {
-        renderChores();
-        drawWheel();
-
-        spinBtn.disabled =
-            isSpinning || chores.length === 0;
-
-        if (resetBtn) {
-            resetBtn.disabled = isSpinning;
-        }
-
-        if (clearBtn) {
-            clearBtn.disabled = isSpinning;
-        }
-
-        if (choreInput) {
-            choreInput.disabled = isSpinning;
-        }
-
-        const addButton = choreForm.querySelector(
-            'button[type="submit"]'
-        );
-
-        if (addButton) {
-            addButton.disabled = isSpinning;
-        }
-    }
-
-    // =========================
-    // ADD CHORE
-    // =========================
-
-    choreForm.addEventListener("submit", event => {
-        event.preventDefault();
-
-        if (isSpinning) return;
-
-        const newChore = choreInput.value.trim();
-
-        if (!newChore) {
-            result.textContent = "Please enter a chore!";
-            choreInput.focus();
-            return;
-        }
-
-        const alreadyExists = chores.some(
-            chore =>
-                chore.toLowerCase() ===
-                newChore.toLowerCase()
-        );
-
-        if (alreadyExists) {
-            result.textContent =
-                "That chore is already on your list!";
-            choreInput.focus();
-            return;
-        }
-
-        chores.push(newChore);
-
-        saveChores();
-        renderAll();
-
-        choreInput.value = "";
-        choreInput.focus();
-
-        result.textContent =
-            "Chore added! Ready to spin? 🎯";
+      result.textContent = "Chore removed.";
     });
 
-    // =========================
-    // REMOVE CHORE
-    // =========================
+    li.appendChild(name);
+    li.appendChild(removeBtn);
+    choreList.appendChild(li);
+  });
 
-    // Each remove button is created in renderChores().
+  choreCount.textContent =
+    chores.length + (chores.length === 1 ? " chore" : " chores");
 
-    // =========================
-    // SOUND EFFECTS
-    // =========================
+  drawWheel();
+}
 
-    function playSound(frequency = 600, duration = 0.12) {
-        if (!soundToggle || !soundToggle.checked) {
-            return;
-        }
+function renderAll() {
+  renderChores();
+}
 
-        try {
-            const AudioContextClass =
-                window.AudioContext ||
-                window.webkitAudioContext;
+// ===================================
+// ADD CHORE
+// ===================================
 
-            if (!AudioContextClass) return;
+choreForm.addEventListener("submit", event => {
+  event.preventDefault();
 
-            if (!audioContext) {
-                audioContext = new AudioContextClass();
-            }
+  if (spinning) return;
 
-            if (audioContext.state === "suspended") {
-                audioContext.resume();
-            }
+  const chore = choreInput.value.trim();
 
-            const oscillator =
-                audioContext.createOscillator();
+  if (!chore) {
+    choreInput.focus();
+    return;
+  }
 
-            const gain = audioContext.createGain();
+  if (chores.some(item => item.toLowerCase() === chore.toLowerCase())) {
+    result.textContent = "That chore is already on the list!";
+    choreInput.focus();
+    return;
+  }
 
-            oscillator.type = "sine";
-            oscillator.frequency.value = frequency;
+  chores.push(chore);
+  saveChores();
+  renderAll();
 
-            gain.gain.setValueAtTime(
-                0.12,
-                audioContext.currentTime
-            );
+  choreInput.value = "";
+  choreInput.focus();
 
-            gain.gain.exponentialRampToValueAtTime(
-                0.001,
-                audioContext.currentTime + duration
-            );
+  result.textContent = "Chore added! Ready to spin?";
+});
 
-            oscillator.connect(gain);
-            gain.connect(audioContext.destination);
+// ===================================
+// RESET AND CLEAR
+// ===================================
 
-            oscillator.start();
-            oscillator.stop(
-                audioContext.currentTime + duration
-            );
-        } catch (error) {
-            console.warn("Sound unavailable:", error);
-        }
+resetBtn.addEventListener("click", () => {
+  if (spinning) return;
+
+  if (!confirm("Reset the list to the default chores?")) return;
+
+  chores = [...DEFAULT_CHORES];
+  wheelRotation = 0;
+
+  saveChores();
+  renderAll();
+
+  result.textContent = "Default chores restored!";
+});
+
+clearBtn.addEventListener("click", () => {
+  if (spinning) return;
+
+  if (chores.length === 0) {
+    result.textContent = "The chore list is already empty.";
+    return;
+  }
+
+  if (!confirm("Are you sure you want to clear all chores?")) return;
+
+  chores = [];
+  wheelRotation = 0;
+
+  saveChores();
+  renderAll();
+
+  result.textContent = "All chores cleared. Add new chores to play!";
+});
+
+// ===================================
+// SOUND EFFECTS
+// ===================================
+
+function playTone(frequency, duration, type = "sine", volume = 0.08) {
+  if (!soundToggle.checked) return;
+
+  try {
+    const AudioContextClass =
+      window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) return;
+
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
     }
 
-    // =========================
-    // CONFETTI EFFECT
-    // =========================
-
-    function showConfetti() {
-        const canvas = document.createElement("canvas");
-
-        canvas.className = "confetti-canvas";
-
-        canvas.style.position = "fixed";
-        canvas.style.inset = "0";
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.style.pointerEvents = "none";
-        canvas.style.zIndex = "9999";
-
-        document.body.appendChild(canvas);
-
-        const confettiCtx = canvas.getContext("2d");
-
-        if (!confettiCtx) {
-            canvas.remove();
-            return;
-        }
-
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        const pixelRatio = Math.min(
-            window.devicePixelRatio || 1,
-            2
-        );
-
-        canvas.width = width * pixelRatio;
-        canvas.height = height * pixelRatio;
-
-        confettiCtx.scale(pixelRatio, pixelRatio);
-
-        const pieces = [];
-
-        for (let i = 0; i < 100; i++) {
-            pieces.push({
-                x: Math.random() * width,
-                y: -Math.random() * height,
-                size: 4 + Math.random() * 7,
-                speedY: 2 + Math.random() * 4,
-                speedX: -2 + Math.random() * 4,
-                rotation: Math.random() * 360,
-                spin: -5 + Math.random() * 10,
-                color: COLORS[
-                    Math.floor(Math.random() * COLORS.length)
-                ]
-            });
-        }
-
-        let frame = 0;
-        const maxFrames = 150;
-
-        function animateConfetti() {
-            confettiCtx.clearRect(0, 0, width, height);
-
-            pieces.forEach(piece => {
-                piece.x += piece.speedX;
-                piece.y += piece.speedY;
-                piece.rotation += piece.spin;
-
-                confettiCtx.save();
-
-                confettiCtx.translate(piece.x, piece.y);
-                confettiCtx.rotate(
-                    piece.rotation * Math.PI / 180
-                );
-
-                confettiCtx.fillStyle = piece.color;
-
-                confettiCtx.fillRect(
-                    -piece.size / 2,
-                    -piece.size / 2,
-                    piece.size,
-                    piece.size * 0.65
-                );
-
-                confettiCtx.restore();
-            });
-
-            frame++;
-
-            if (frame < maxFrames) {
-                requestAnimationFrame(animateConfetti);
-            } else {
-                canvas.remove();
-            }
-        }
-
-        animateConfetti();
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
     }
 
-    // =========================
-    // SPIN THE WHEEL
-    // =========================
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
 
-    function spinWheel() {
-        if (isSpinning) return;
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+    gain.gain.value = volume;
 
-        if (chores.length === 0) {
-            result.textContent =
-                "Add at least one chore before spinning!";
-            return;
-        }
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
 
-        isSpinning = true;
-        renderAll();
+    oscillator.start();
 
-        result.textContent = "Spinning... Good luck! 🎡";
-
-        playSound(450, 0.15);
-
-        const winnerIndex = Math.floor(
-            Math.random() * chores.length
-        );
-
-        const sliceDegrees = 360 / chores.length;
-
-        // Align the selected slice with the top pointer.
-        const targetAngle =
-            (
-                360 -
-                ((winnerIndex + 0.5) * sliceDegrees % 360)
-            ) % 360;
-
-        const currentNormalized =
-            ((currentRotation % 360) + 360) % 360;
-
-        const extraDegrees =
-            (targetAngle - currentNormalized + 360) % 360;
-
-        const extraTurns =
-            (5 + Math.floor(Math.random() * 3)) * 360;
-
-        const finalRotation =
-            currentRotation + extraTurns + extraDegrees;
-
-        let finished = false;
-
-        function finishSpin() {
-            if (finished) return;
-
-            finished = true;
-
-            clearTimeout(spinTimeout);
-
-            wheel.removeEventListener(
-                "transitionend",
-                onTransitionEnd
-            );
-
-            currentRotation = finalRotation;
-
-            isSpinning = false;
-
-            const winner = chores[winnerIndex];
-
-            result.textContent =
-                "🎉 Your chore is: " + winner + "!";
-
-            playSound(850, 0.3);
-            showConfetti();
-
-            renderAll();
-        }
-
-        function onTransitionEnd(event) {
-            if (
-                event.target === wheel &&
-                event.propertyName === "transform"
-            ) {
-                finishSpin();
-            }
-        }
-
-        wheel.removeEventListener(
-            "transitionend",
-            onTransitionEnd
-        );
-
-        wheel.style.transition = "none";
-        wheel.style.transform =
-            "rotate(" + currentRotation + "deg)";
-
-        // Force the browser to apply the reset before spinning.
-        void wheel.offsetWidth;
-
-        wheel.addEventListener(
-            "transitionend",
-            onTransitionEnd
-        );
-
-        wheel.style.transition =
-            "transform 4s cubic-bezier(0.12, 0.75, 0.15, 1)";
-
-        wheel.style.transform =
-            "rotate(" + finalRotation + "deg)";
-
-        spinTimeout = setTimeout(finishSpin, 4600);
-    }
-
-    spinBtn.addEventListener("click", spinWheel);
-
-    // =========================
-    // RESET CHORES
-    // =========================
-
-    if (resetBtn) {
-        resetBtn.addEventListener("click", () => {
-            if (isSpinning) return;
-
-            chores = [...DEFAULT_CHORES];
-
-            currentRotation = 0;
-
-            wheel.style.transition = "none";
-            wheel.style.transform = "rotate(0deg)";
-
-            saveChores();
-            renderAll();
-
-            result.textContent =
-                "Chores reset! Ready for a new spin? 🔄";
-        });
-    }
-
-    // =========================
-    // CLEAR ALL CHORES
-    // =========================
-
-    if (clearBtn) {
-        clearBtn.addEventListener("click", () => {
-            if (isSpinning) return;
-
-            if (chores.length === 0) {
-                result.textContent =
-                    "Your chore list is already empty!";
-                return;
-            }
-
-            const confirmed = window.confirm(
-                "Are you sure you want to clear all chores?"
-            );
-
-            if (!confirmed) return;
-
-            chores = [];
-            currentRotation = 0;
-
-            wheel.style.transition = "none";
-            wheel.style.transform = "rotate(0deg)";
-
-            saveChores();
-            renderAll();
-
-            result.textContent =
-                "All chores cleared. Add a new chore! 📝";
-        });
-    }
-
-    // =========================
-    // SETTINGS PANEL
-    // =========================
-
-    if (settingsBtn && settingsPanel) {
-        settingsBtn.addEventListener("click", () => {
-            settingsPanel.classList.toggle("hidden");
-        });
-    }
-
-    if (closeSettingsBtn && settingsPanel) {
-        closeSettingsBtn.addEventListener("click", () => {
-            settingsPanel.classList.add("hidden");
-        });
-    }
-
-    // =========================
-    // DARK MODE
-    // =========================
-
-    function applyDarkMode(enabled) {
-        document.body.classList.toggle(
-            "dark-mode",
-            Boolean(enabled)
-        );
-
-        if (darkModeToggle) {
-            darkModeToggle.checked = Boolean(enabled);
-        }
-
-        saveStorage("choresRouletteDarkMode", Boolean(enabled));
-    }
-
-    const savedDarkMode = loadStorage(
-        "choresRouletteDarkMode",
-        false
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      audioContext.currentTime + duration
     );
 
-    applyDarkMode(savedDarkMode);
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (error) {
+    console.warn("Sound is unavailable.", error);
+  }
+}
 
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener("change", () => {
-            applyDarkMode(darkModeToggle.checked);
-        });
+function playWinSound() {
+  playTone(523, 0.18, "sine");
+  setTimeout(() => playTone(659, 0.18, "sine"), 160);
+  setTimeout(() => playTone(784, 0.3, "sine"), 320);
+}
+
+// ===================================
+// SPIN THE WHEEL
+// ===================================
+
+spinBtn.addEventListener("click", () => {
+  if (spinning) return;
+
+  if (chores.length === 0) {
+    result.textContent = "Please add at least one chore first!";
+    return;
+  }
+
+  spinning = true;
+  spinBtn.disabled = true;
+  result.textContent = "🎡 The wheel is spinning...";
+
+  const selectedIndex = Math.floor(Math.random() * chores.length);
+  const slice = (Math.PI * 2) / chores.length;
+
+  // The selected slice will stop beneath the pointer at the top.
+  const targetAngle =
+    Math.PI * 1.5 - (selectedIndex + 0.5) * slice;
+
+  const current = ((wheelRotation % (Math.PI * 2)) + Math.PI * 2) %
+    (Math.PI * 2);
+
+  const normalizedTarget =
+    ((targetAngle % (Math.PI * 2)) + Math.PI * 2) %
+    (Math.PI * 2);
+
+  const extraTurns = 5 + Math.floor(Math.random() * 3);
+
+  const delta =
+    extraTurns * Math.PI * 2 +
+    ((normalizedTarget - current + Math.PI * 2) % (Math.PI * 2));
+
+  const startRotation = wheelRotation;
+  const endRotation = startRotation + delta;
+  const duration = 4500;
+  const startTime = performance.now();
+
+  let lastTick = 0;
+
+  function animate(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+
+    // Smooth ease-out motion.
+    const eased = 1 - Math.pow(1 - progress, 4);
+
+    wheelRotation = startRotation + delta * eased;
+    drawWheel();
+
+    // Light ticking sound while the wheel spins.
+    if (now - lastTick > 140 && progress < 0.9) {
+      playTone(260, 0.035, "square", 0.018);
+      lastTick = now;
     }
 
-    // =========================
-    // SOUND SETTING
-    // =========================
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      wheelRotation = endRotation;
+      drawWheel();
 
-    const savedSound = loadStorage(
-        "choresRouletteSound",
-        true
+      result.textContent = "🎉 Your chore is: " + chores[selectedIndex] + "!";
+      playWinSound();
+
+      spinning = false;
+      spinBtn.disabled = false;
+    }
+  }
+
+  requestAnimationFrame(animate);
+});
+
+// ===================================
+// SETTINGS POPUP
+// ===================================
+
+function openSettings() {
+  settingsModal.classList.add("open");
+  settingsModal.setAttribute("aria-hidden", "false");
+  showSettingsPage();
+}
+
+function closeSettingsPopup() {
+  settingsModal.classList.remove("open");
+  settingsModal.setAttribute("aria-hidden", "true");
+}
+
+function showSettingsPage() {
+  settingsPage.hidden = false;
+  aboutPage.hidden = true;
+}
+
+function showAboutPage() {
+  settingsPage.hidden = true;
+  aboutPage.hidden = false;
+}
+
+settingsBtn.addEventListener("click", openSettings);
+closeSettings.addEventListener("click", closeSettingsPopup);
+
+settingsModal.addEventListener("click", event => {
+  if (event.target === settingsModal) {
+    closeSettingsPopup();
+  }
+});
+
+aboutBtn.addEventListener("click", showAboutPage);
+backToSettings.addEventListener("click", showSettingsPage);
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    closeSettingsPopup();
+  }
+});
+
+// ===================================
+// DARK MODE
+// ===================================
+
+darkModeToggle.addEventListener("change", () => {
+  document.body.classList.toggle("dark", darkModeToggle.checked);
+
+  try {
+    localStorage.setItem(
+      "choresRouletteDarkMode",
+      darkModeToggle.checked ? "on" : "off"
     );
+  } catch (error) {
+    // The setting still works for the current page.
+  }
+});
 
-    if (soundToggle) {
-        soundToggle.checked = Boolean(savedSound);
+// ===================================
+// SOUND SETTING
+// ===================================
 
-        soundToggle.addEventListener("change", () => {
-            saveStorage(
-                "choresRouletteSound",
-                soundToggle.checked
-            );
+soundToggle.addEventListener("change", () => {
+  try {
+    localStorage.setItem(
+      "choresRouletteSound",
+      soundToggle.checked ? "on" : "off"
+    );
+  } catch (error) {
+    // The setting still works for the current page.
+  }
 
-            if (soundToggle.checked) {
-                playSound(600, 0.1);
-            }
-        });
-    }
+  if (soundToggle.checked) {
+    playTone(660, 0.12);
+  }
+});
 
-    // =========================
-    // START APP
-    // =========================
+// ===================================
+// LOAD SAVED SETTINGS
+// ===================================
 
-    renderAll();
+function loadSettings() {
+  try {
+    const savedDarkMode = localStorage.getItem("choresRouletteDarkMode");
+    const savedSound = localStorage.getItem("choresRouletteSound");
 
-    result.textContent = chores.length
-        ? "Your chore will appear here!"
-        : "Add some chores to get started!";
+    darkModeToggle.checked = savedDarkMode === "on";
+    soundToggle.checked = savedSound !== "off";
 
-    console.log("Chores Roulette loaded successfully!");
-})();
+    document.body.classList.toggle("dark", darkModeToggle.checked);
+  } catch (error) {
+    soundToggle.checked = true;
+  }
+}
+
+// ===================================
+// START APP
+// ===================================
+
+loadSettings();
+renderAll();
+panget
+panget deleted a message
+Compose
+Write to Prince Dhaniel Evangelista
+
+
