@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chores Roulette</title>
@@ -54,7 +55,24 @@
       <p id="choreCount" class="chore-count">0 chores</p>
     </aside>
   </main>
+<!-- WINNER POPUP -->
+<div id="winnerModal" class="modal" aria-hidden="true">
+  <div
+    class="winner-modal-content"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="winnerTitle"
+  >
+    <h2 id="winnerTitle">Chore Selected!</h2>
 
+    <p id="winnerChore" class="winner-chore"></p>
+
+    <button id="winnerOkBtn" class="winner-ok-btn">
+      OK
+    </button>
+  </div>
+</div>
+  
   <!-- SETTINGS POPUP -->
   <div id="settingsModal" class="modal" aria-hidden="true">
     <div class="modal-content">
@@ -92,3 +110,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
+<meta name="google-site-verification" content="M6m52WsVXBPjdkLIXG2EVXH_B1MpG-iYokd3EMdpNVM" />
