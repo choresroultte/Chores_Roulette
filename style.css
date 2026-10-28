@@ -372,3 +372,55 @@ body.dark .remove-btn {
     order: 1;
   }
 }
+/* MINIMALIST WINNER POPUP */
+
+#winnerModal {
+  z-index: 20;
+}
+
+.winner-modal-content {
+  width: min(100%, 340px);
+  padding: 26px 22px;
+  text-align: center;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+
+  animation: winnerFadeIn 0.2s ease-out;
+}
+
+.winner-modal-content h2 {
+  margin: 0 0 16px;
+  font-size: 21px;
+  color: var(--purple);
+}
+
+.winner-chore {
+  margin: 0 0 22px;
+  font-size: 18px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+.winner-ok-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--purple);
+  color: white;
+  font-weight: bold;
+}
+
+@keyframes winnerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
