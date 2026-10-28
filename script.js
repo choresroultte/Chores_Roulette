@@ -28,6 +28,10 @@ let wheelRotation = 0;
 let spinning = false;
 let audioContext = null;
 
+// ===================================
+// HTML ELEMENTS
+// ===================================
+
 const wheel = document.getElementById("wheel");
 const ctx = wheel.getContext("2d");
 
@@ -53,8 +57,13 @@ const aboutPage = document.getElementById("aboutPage");
 const aboutBtn = document.getElementById("aboutBtn");
 const backToSettings = document.getElementById("backToSettings");
 
+// Winner Popup elements
+const winnerModal = document.getElementById("winnerModal");
+const winnerChore = document.getElementById("winnerChore");
+const winnerOkBtn = document.getElementById("winnerOkBtn");
+
 // ===================================
-// SAVE AND LOAD
+// SAVE AND LOAD CHORES
 // ===================================
 
 function loadChores() {
@@ -79,7 +88,10 @@ function loadChores() {
 
 function saveChores() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chores));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(chores)
+    );
   } catch (error) {
     console.warn("Could not save chores.", error);
   }
@@ -122,10 +134,12 @@ function drawWheel() {
     const start = index * slice;
     const end = start + slice;
 
+    // Draw wheel slice
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.arc(0, 0, radius, start, end);
     ctx.closePath();
+
     ctx.fillStyle = COLORS[index % COLORS.length];
     ctx.fill();
 
@@ -133,13 +147,18 @@ function drawWheel() {
     ctx.lineWidth = 3;
     ctx.stroke();
 
+    // Draw chore label
     ctx.save();
     ctx.rotate(start + slice / 2);
 
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    ctx.font = `bold ${Math.max(11, Math.min(17, 200 / chores.length))}px Arial`;
+
+    ctx.font = `bold ${Math.max(
+      11,
+      Math.min(17, 200 / chores.length)
+    )}px Arial`;
 
     let label = chore;
     const maxLength = chores.length > 8 ? 13 : 19;
@@ -152,16 +171,23 @@ function drawWheel() {
     ctx.shadowBlur = 2;
 
     ctx.fillText(label, radius - 22, 0);
+
     ctx.restore();
   });
 
   ctx.restore();
+
   drawWheelCenter(center);
 }
+
+// ===================================
+// WHEEL CENTER
+// ===================================
 
 function drawWheelCenter(center) {
   ctx.beginPath();
   ctx.arc(center, center, 25, 0, Math.PI * 2);
+
   ctx.fillStyle = "#ffffff";
   ctx.fill();
 
@@ -193,6 +219,7 @@ function renderChores() {
       if (spinning) return;
 
       chores.splice(index, 1);
+
       saveChores();
       renderAll();
 
@@ -201,11 +228,13 @@ function renderChores() {
 
     li.appendChild(name);
     li.appendChild(removeBtn);
+
     choreList.appendChild(li);
   });
 
   choreCount.textContent =
-    chores.length + (chores.length === 1 ? " chore" : " chores");
+    chores.length +
+    (chores.length === 1 ? " chore" : " chores");
 
   drawWheel();
 }
@@ -230,13 +259,20 @@ choreForm.addEventListener("submit", event => {
     return;
   }
 
-  if (chores.some(item => item.toLowerCase() === chore.toLowerCase())) {
-    result.textContent = "That chore is already on the list!";
+  const alreadyExists = chores.some(
+    item => item.toLowerCase() === chore.toLowerCase()
+  );
+
+  if (alreadyExists) {
+    result.textContent =
+      "That chore is already on the list!";
+
     choreInput.focus();
     return;
   }
 
   chores.push(chore);
+
   saveChores();
   renderAll();
 
@@ -247,13 +283,17 @@ choreForm.addEventListener("submit", event => {
 });
 
 // ===================================
-// RESET AND CLEAR
+// RESET CHORES
 // ===================================
 
 resetBtn.addEventListener("click", () => {
   if (spinning) return;
 
-  if (!confirm("Reset the list to the default chores?")) return;
+  if (!confirm("Reset the list to the default chores?")) {
+    return;
+  }
+
+  closeWinnerPopup();
 
   chores = [...DEFAULT_CHORES];
   wheelRotation = 0;
@@ -264,6 +304,10 @@ resetBtn.addEventListener("click", () => {
   result.textContent = "Default chores restored!";
 });
 
+// ===================================
+// CLEAR ALL CHORES
+// ===================================
+
 clearBtn.addEventListener("click", () => {
   if (spinning) return;
 
@@ -272,7 +316,11 @@ clearBtn.addEventListener("click", () => {
     return;
   }
 
-  if (!confirm("Are you sure you want to clear all chores?")) return;
+  if (!confirm("Are you sure you want to clear all chores?")) {
+    return;
+  }
+
+  closeWinnerPopup();
 
   chores = [];
   wheelRotation = 0;
@@ -280,14 +328,20 @@ clearBtn.addEventListener("click", () => {
   saveChores();
   renderAll();
 
-  result.textContent = "All chores cleared. Add new chores to play!";
+  result.textContent =
+    "All chores cleared. Add new chores to play!";
 });
 
 // ===================================
 // SOUND EFFECTS
 // ===================================
 
-function playTone(frequency, duration, type = "sine", volume = 0.08) {
+function playTone(
+  frequency,
+  duration,
+  type = "sine",
+  volume = 0.08
+) {
   if (!soundToggle.checked) return;
 
   try {
@@ -321,17 +375,59 @@ function playTone(frequency, duration, type = "sine", volume = 0.08) {
       audioContext.currentTime + duration
     );
 
-    oscillator.stop(audioContext.currentTime + duration);
+    oscillator.stop(
+      audioContext.currentTime + duration
+    );
   } catch (error) {
     console.warn("Sound is unavailable.", error);
   }
 }
 
+// ===================================
+// WINNER SOUND
+// ===================================
+
 function playWinSound() {
   playTone(523, 0.18, "sine");
-  setTimeout(() => playTone(659, 0.18, "sine"), 160);
-  setTimeout(() => playTone(784, 0.3, "sine"), 320);
+
+  setTimeout(() => {
+    playTone(659, 0.18, "sine");
+  }, 160);
+
+  setTimeout(() => {
+    playTone(784, 0.3, "sine");
+  }, 320);
 }
+
+// ===================================
+// WINNER POPUP
+// ===================================
+
+function showWinnerPopup(chore) {
+  winnerChore.textContent = chore;
+
+  winnerModal.classList.add("open");
+  winnerModal.setAttribute("aria-hidden", "false");
+
+  winnerOkBtn.focus();
+}
+
+function closeWinnerPopup() {
+  winnerModal.classList.remove("open");
+  winnerModal.setAttribute("aria-hidden", "true");
+}
+
+winnerOkBtn.addEventListener("click", () => {
+  closeWinnerPopup();
+  spinBtn.focus();
+});
+
+winnerModal.addEventListener("click", event => {
+  if (event.target === winnerModal) {
+    closeWinnerPopup();
+    spinBtn.focus();
+  }
+});
 
 // ===================================
 // SPIN THE WHEEL
@@ -341,51 +437,69 @@ spinBtn.addEventListener("click", () => {
   if (spinning) return;
 
   if (chores.length === 0) {
-    result.textContent = "Please add at least one chore first!";
+    result.textContent =
+      "Please add at least one chore first!";
+
     return;
   }
 
+  closeWinnerPopup();
+
   spinning = true;
   spinBtn.disabled = true;
+
   result.textContent = "🎡 The wheel is spinning...";
 
-  const selectedIndex = Math.floor(Math.random() * chores.length);
+  const selectedIndex = Math.floor(
+    Math.random() * chores.length
+  );
+
   const slice = (Math.PI * 2) / chores.length;
 
-  // The selected slice will stop beneath the pointer at the top.
+  // Selected slice stops beneath the pointer
   const targetAngle =
     Math.PI * 1.5 - (selectedIndex + 0.5) * slice;
 
-  const current = ((wheelRotation % (Math.PI * 2)) + Math.PI * 2) %
+  const current =
+    ((wheelRotation % (Math.PI * 2)) + Math.PI * 2) %
     (Math.PI * 2);
 
   const normalizedTarget =
     ((targetAngle % (Math.PI * 2)) + Math.PI * 2) %
     (Math.PI * 2);
 
-  const extraTurns = 5 + Math.floor(Math.random() * 3);
+  const extraTurns =
+    5 + Math.floor(Math.random() * 3);
 
   const delta =
     extraTurns * Math.PI * 2 +
-    ((normalizedTarget - current + Math.PI * 2) % (Math.PI * 2));
+    (
+      (normalizedTarget - current + Math.PI * 2) %
+      (Math.PI * 2)
+    );
 
   const startRotation = wheelRotation;
   const endRotation = startRotation + delta;
+
   const duration = 4500;
   const startTime = performance.now();
 
   let lastTick = 0;
 
   function animate(now) {
-    const progress = Math.min((now - startTime) / duration, 1);
+    const progress = Math.min(
+      (now - startTime) / duration,
+      1
+    );
 
-    // Smooth ease-out motion.
+    // Smooth ease-out animation
     const eased = 1 - Math.pow(1 - progress, 4);
 
     wheelRotation = startRotation + delta * eased;
+
     drawWheel();
 
-    // Light ticking sound while the wheel spins.
+    // Ticking sound
     if (now - lastTick > 140 && progress < 0.9) {
       playTone(260, 0.035, "square", 0.018);
       lastTick = now;
@@ -397,8 +511,15 @@ spinBtn.addEventListener("click", () => {
       wheelRotation = endRotation;
       drawWheel();
 
-      result.textContent = "🎉 Your chore is: " + chores[selectedIndex] + "!";
+      const selectedChore = chores[selectedIndex];
+
+      result.textContent =
+        "🎉 Your chore is: " + selectedChore + "!";
+
       playWinSound();
+
+      // Display the selected chore in a popup
+      showWinnerPopup(selectedChore);
 
       spinning = false;
       spinBtn.disabled = false;
@@ -415,6 +536,7 @@ spinBtn.addEventListener("click", () => {
 function openSettings() {
   settingsModal.classList.add("open");
   settingsModal.setAttribute("aria-hidden", "false");
+
   showSettingsPage();
 }
 
@@ -445,9 +567,11 @@ settingsModal.addEventListener("click", event => {
 aboutBtn.addEventListener("click", showAboutPage);
 backToSettings.addEventListener("click", showSettingsPage);
 
+// Close popups with Escape
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeSettingsPopup();
+    closeWinnerPopup();
   }
 });
 
@@ -456,7 +580,10 @@ document.addEventListener("keydown", event => {
 // ===================================
 
 darkModeToggle.addEventListener("change", () => {
-  document.body.classList.toggle("dark", darkModeToggle.checked);
+  document.body.classList.toggle(
+    "dark",
+    darkModeToggle.checked
+  );
 
   try {
     localStorage.setItem(
@@ -464,7 +591,7 @@ darkModeToggle.addEventListener("change", () => {
       darkModeToggle.checked ? "on" : "off"
     );
   } catch (error) {
-    // The setting still works for the current page.
+    // Dark mode still works for the current page.
   }
 });
 
@@ -479,7 +606,7 @@ soundToggle.addEventListener("change", () => {
       soundToggle.checked ? "on" : "off"
     );
   } catch (error) {
-    // The setting still works for the current page.
+    // Sound setting still works for the current page.
   }
 
   if (soundToggle.checked) {
@@ -493,13 +620,19 @@ soundToggle.addEventListener("change", () => {
 
 function loadSettings() {
   try {
-    const savedDarkMode = localStorage.getItem("choresRouletteDarkMode");
-    const savedSound = localStorage.getItem("choresRouletteSound");
+    const savedDarkMode =
+      localStorage.getItem("choresRouletteDarkMode");
+
+    const savedSound =
+      localStorage.getItem("choresRouletteSound");
 
     darkModeToggle.checked = savedDarkMode === "on";
     soundToggle.checked = savedSound !== "off";
 
-    document.body.classList.toggle("dark", darkModeToggle.checked);
+    document.body.classList.toggle(
+      "dark",
+      darkModeToggle.checked
+    );
   } catch (error) {
     soundToggle.checked = true;
   }
